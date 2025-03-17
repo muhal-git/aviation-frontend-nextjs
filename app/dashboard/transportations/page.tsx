@@ -15,6 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import ReactPaginate from 'react-paginate';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Location {
   id: number;
@@ -32,6 +34,8 @@ const CrudApp = () => {
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 5;
 
   // API base URL - replace with your actual API endpoint
   const API_URL = 'http://localhost:3434/api/locations';
@@ -195,6 +199,13 @@ const CrudApp = () => {
     }
   }, [editing]);
 
+  const handlePageClick = (selectedItem: { selected: number }) => {
+    setCurrentPage(selectedItem.selected);
+  };
+
+  const offset = currentPage * itemsPerPage;
+  const currentItems = locations.slice(offset, offset + itemsPerPage);
+
   return (
     <div className="w-full max-w-4xl mx-auto p-6">
       <Toaster className="" />
@@ -309,51 +320,73 @@ const CrudApp = () => {
         )}
 
         {locations.length > 0 && (
-          <Table>
-            <TableCaption>A list of locations.</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Actions</TableHead>
-                <TableHead className="w-[100px]">Location Code</TableHead>
-                <TableHead>Country</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead className="text-right">City</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {locations.map((location) => (
-                <TableRow key={location.locationCode}>
-                  <TableCell key={location.locationCode}>
-                    <button
-                      className="text-indigo-600 hover:text-indigo-900 mr-4"
-                      onClick={() => editItem(location)}
-                      disabled={loading}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="text-red-600 hover:text-red-900"
-                      onClick={() => deleteItem(location.locationCode)}
-                      disabled={loading}
-                    >
-                      Delete
-                    </button>
-                  </TableCell>
-                  <TableCell className="font-medium">{location.locationCode}</TableCell>
-                  <TableCell>{location.country}</TableCell>
-                  <TableCell>{location.name}</TableCell>
-                  <TableCell className="text-right">{location.city}</TableCell>
+          <>
+            <Table>
+              <TableCaption>A list of locations.</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Actions</TableHead>
+                  <TableHead className="w-[100px]">Location Code</TableHead>
+                  <TableHead>Country</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead className="text-right">City</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TableCell>Total records</TableCell>
-                <TableCell className="text-right">{locations.length}</TableCell>
-                <TableCell colSpan={3}></TableCell>
-              </TableRow>
-            </TableFooter>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {currentItems.map((location) => (
+                  <TableRow key={location.locationCode}>
+                    <TableCell key={location.locationCode}>
+                      <button
+                        className="text-indigo-600 hover:text-indigo-900 mr-4"
+                        onClick={() => editItem(location)}
+                        disabled={loading}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="text-red-600 hover:text-red-900"
+                        onClick={() => deleteItem(location.locationCode)}
+                        disabled={loading}
+                      >
+                        Delete
+                      </button>
+                    </TableCell>
+                    <TableCell className="font-medium">{location.locationCode}</TableCell>
+                    <TableCell>{location.country}</TableCell>
+                    <TableCell>{location.name}</TableCell>
+                    <TableCell className="text-right">{location.city}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell>Total records</TableCell>
+                  <TableCell className="text-right">{locations.length}</TableCell>
+                  <TableCell colSpan={3}></TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
+            <ReactPaginate
+              previousLabel={<ChevronLeft size={16} />}
+              nextLabel={<ChevronRight size={16} />}
+              breakLabel={'...'}
+              breakClassName={'break-me'}
+              pageCount={Math.ceil(locations.length / itemsPerPage)}
+              marginPagesDisplayed={2}
+              pageRangeDisplayed={5}
+              onPageChange={handlePageClick}
+              containerClassName={'flex justify-center items-center gap-1 py-4 px-2'}
+              pageClassName={'inline-flex items-center justify-center w-8 h-8 rounded-md text-sm border border-gray-300 bg-white hover:bg-blue-50 hover:text-blue-600 transition-colors'}
+              pageLinkClassName={'flex items-center justify-center w-full h-full'}
+              previousClassName={'inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-300 bg-white hover:bg-blue-50 hover:text-blue-600 transition-colors'}
+              nextClassName={'inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-300 bg-white hover:bg-blue-50 hover:text-blue-600 transition-colors'}
+              previousLinkClassName={'flex items-center justify-center w-full h-full'}
+              nextLinkClassName={'flex items-center justify-center w-full h-full'}
+              breakLinkClassName={'flex items-center justify-center px-3 py-1'}
+              activeClassName={'!bg-blue-500 !text-white !border-blue-500 hover:!bg-blue-600'}
+              disabledClassName={'opacity-50 cursor-not-allowed hover:bg-white hover:text-gray-500'}
+            />
+          </>
         )}
 
       </div>

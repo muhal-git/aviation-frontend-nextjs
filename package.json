@@ -32,6 +32,7 @@
     "react": "latest",
     "react-day-picker": "8.10.1",
     "react-dom": "latest",
+    "react-paginate": "^8.3.0",
     "sonner": "^2.0.1",
     "sweetalert": "^2.1.2",
     "tailwind-merge": "^2.6.0",
