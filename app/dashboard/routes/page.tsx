@@ -23,6 +23,22 @@ import {
 } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
 
 interface Transfer {
   origin: string;
@@ -153,7 +169,18 @@ export default function TripSelection() {
             />
           </PopoverContent>
         </Popover>
-        <Button variant="outline" className="w-full md:w-auto" onClick={handleSearch}>Search</Button>
+
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" className="w-full md:w-auto" onClick={handleSearch}>Search</Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Search Routes</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
       </div>
 
       {routes.length > 0 && (
@@ -163,29 +190,46 @@ export default function TripSelection() {
               <h4 className="mb-4 text-sm font-medium leading-none">Routes</h4>
               {routes.map((route, index) => (
                 <React.Fragment key={index}>
-                      <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => {
-                        let message = `Description: ${route.description}\nOrigin: ${route.flight.origin}\nDestination: ${route.flight.destination}\nTransportation Type: ${route.flight.transportationType}`;
-                        if (route.beforeFlightTransfer) {
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      let message = `Description: ${route.description}\nOrigin: ${route.flight.origin}\nDestination: ${route.flight.destination}\nTransportation Type: ${route.flight.transportationType}`;
+                      if (route.beforeFlightTransfer) {
                         message += `\n\nBefore Flight Transfer:\nOrigin: ${route.beforeFlightTransfer.origin}\nDestination: ${route.beforeFlightTransfer.destination}\nTransportation Type: ${route.beforeFlightTransfer.transportationType}`;
-                        }
-                        if (route.afterFlightTransfer) {
+                      }
+                      if (route.afterFlightTransfer) {
                         message += `\n\nAfter Flight Transfer:\nOrigin: ${route.afterFlightTransfer.origin}\nDestination: ${route.afterFlightTransfer.destination}\nTransportation Type: ${route.afterFlightTransfer.transportationType}`;
-                        }
-                        alert(message);
-                      }}
-                      key={index}
-                      >
-                      {route.description}
-                      </Button><Separator className="my-2" />
+                      }
+                      alert(message);
+                    }}
+                    key={index}
+                  >
+                    {route.description}
+                  </Button><Separator className="my-2" />
                 </React.Fragment>
               ))}
             </div>
           </ScrollArea>
         </div>
       )}
+
+      <Drawer>
+        <DrawerTrigger>Open</DrawerTrigger>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Are you absolutely sure?</DrawerTitle>
+            <DrawerDescription>This action cannot be undone.</DrawerDescription>
+          </DrawerHeader>
+          <DrawerFooter>
+            <Button>Submit</Button>
+            <DrawerClose>
+              <Button variant="outline">Cancel</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+
 
 
     </main>
