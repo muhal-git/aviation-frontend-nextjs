@@ -73,6 +73,11 @@ const CrudApp = () => {
 
   // Add a new item via API
   const addItem = async (item: Transportation) => {
+
+    console.log("+++++++++++++++++++++++++++++++");
+    console.log("item: " + JSON.stringify(item));
+    console.log("+++++++++++++++++++++++++++++++");
+
     setLoading(true);
     setError(null);
     try {
@@ -135,10 +140,10 @@ const CrudApp = () => {
   const updateItem = async (id: number, updatedItem: Transportation) => {
 
     if (transportations.find(transportationItem =>
-        transportationItem.originLocationCode === updatedItem.originLocationCode &&
-        transportationItem.destinationLocationCode === updatedItem.destinationLocationCode &&
-        transportationItem.transportationType === updatedItem.transportationType &&
-        transportationItem.operatingDays === updatedItem.operatingDays)) {
+      transportationItem.originLocationCode === updatedItem.originLocationCode &&
+      transportationItem.destinationLocationCode === updatedItem.destinationLocationCode &&
+      transportationItem.transportationType === updatedItem.transportationType &&
+      transportationItem.operatingDays === updatedItem.operatingDays)) {
       swal('Transportation already exists.', '', 'error');
       return;
     }
@@ -190,7 +195,7 @@ const CrudApp = () => {
   };
 
   // Handle input change
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setCurrentItem({ ...currentItem, [name]: value || '' });
   };
@@ -274,16 +279,20 @@ const CrudApp = () => {
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="transportationType">
               Transportation Type
             </label>
-            <input
+            <select
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              type="text"
               name="transportationType"
-              placeholder="Enter transportation type"
               value={currentItem.transportationType || ''}
               onChange={handleInputChange}
               disabled={loading}
               required={true}
-            />
+            >
+              <option value="" disabled>Select transportation type</option>
+              <option value="BUS">BUS</option>
+              <option value="FLIGHT">FLIGHT</option>
+              <option value="UBER">UBER</option>
+              <option value="SUBWAY">SUBWAY</option>
+            </select>
           </div>
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="operatingDays">
