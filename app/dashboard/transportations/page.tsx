@@ -24,6 +24,8 @@ interface Location {
   country: string;
   city: string;
   locationCode: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Main CRUD App Component
