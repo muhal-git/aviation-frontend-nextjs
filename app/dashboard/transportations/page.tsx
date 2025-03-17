@@ -2,7 +2,7 @@
 
 import { CustomAlert } from '@/app/ui/alert';
 import { Toaster } from '@/components/ui/sonner';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import swal from 'sweetalert';
 import {
@@ -36,6 +36,7 @@ const CrudApp = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 5;
+  const [filter, setFilter] = useState('');
 
   // API base URL - replace with your actual API endpoint
   const API_URL = 'http://localhost:3434/api/locations';
@@ -203,8 +204,17 @@ const CrudApp = () => {
     setCurrentPage(selectedItem.selected);
   };
 
+  const filteredItems = useMemo(() => {
+    return locations.filter(location =>
+      location.name.toLowerCase().includes(filter.toLowerCase()) ||
+      location.country.toLowerCase().includes(filter.toLowerCase()) ||
+      location.city.toLowerCase().includes(filter.toLowerCase()) ||
+      location.locationCode.toLowerCase().includes(filter.toLowerCase())
+    );
+  }, [filter, locations]);
+
   const offset = currentPage * itemsPerPage;
-  const currentItems = locations.slice(offset, offset + itemsPerPage);
+  const currentItems = filteredItems.slice(offset, offset + itemsPerPage);
 
   return (
     <div className="w-full max-w-4xl mx-auto p-6">
@@ -310,6 +320,21 @@ const CrudApp = () => {
 
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <h2 className="text-xl font-semibold p-6 bg-gray-50 border-b">Item List</h2>
+
+        <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="filter">
+              Filter
+            </label>
+            <input
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              type="text"
+              name="filter"
+              placeholder="Enter filter keyword"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              disabled={loading}
+            />
+          </div>
 
         {loading && !locations.length && (
           <div className="p-6 text-center text-gray-500">Loading items...</div>
