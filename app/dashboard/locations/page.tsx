@@ -1,12 +1,34 @@
 "use client";
 
+import { CustomAlert } from '@/app/ui/alert';
+import { Toaster } from '@/components/ui/sonner';
 import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+import swal from 'sweetalert';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+
+interface Location {
+  id: number;
+  name: string;
+  country: string;
+  city: string;
+  locationCode: string;
+}
 
 // Main CRUD App Component
 const CrudApp = () => {
   // State for items and form
-  const [items, setItems] = useState([]);
-  const [currentItem, setCurrentItem] = useState({ id: null, name: '', description: '' });
+  const [locations, setLocations] = React.useState<Location[]>([]);
+  const [currentItem, setCurrentItem] = useState<Location>(new Object() as Location);
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,10 +46,13 @@ const CrudApp = () => {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
       const data = await response.json();
-      setItems(data);
+      setLocations(data);
+      swal('Items fetched successfully.', '', 'success');
     } catch (err) {
       setError(`Failed to fetch items: ${(err as Error).message}`);
       console.error('Error fetching items:', err);
+      swal(`Failed to fetch items.`, `${(err as Error).message}`, 'error');
+      setTimeout(fetchItems, 1000);
     } finally {
       setLoading(false);
     }
@@ -39,7 +64,7 @@ const CrudApp = () => {
   }, []);
 
   // Add a new item via API
-  const addItem = async (item) => {
+  const addItem = async (item: Location) => {
     setLoading(true);
     setError(null);
     try {
@@ -50,14 +75,21 @@ const CrudApp = () => {
         },
         body: JSON.stringify(item),
       });
-      
+
+      const locationDataResponse = await response.json();
+
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        const errorMessages = Object.values(locationDataResponse).join(', ');
+        throw new Error(`HTTP error! Status: ${response.status}. Errors: ${errorMessages}`);
       }
-      
-      const newItem = await response.json();
-      setItems(prevItems => [...prevItems, newItem]);
+
+      toast.success('Item added successfully');
+
+      setLocations(prevItems => [...prevItems, locationDataResponse]);
     } catch (err) {
+      console.log("+++++++++++++++++++++++++++++++");
+      console.log("err: " + err);
+      console.log("+++++++++++++++++++++++++++++++");
       setError(`Failed to add item: ${(err as Error).message}`);
       console.error('Error adding item:', err);
     } finally {
@@ -66,30 +98,39 @@ const CrudApp = () => {
   };
 
   // Delete an item via API
-  const deleteItem = async (id) => {
+  const deleteItem = async (locationCode: string) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/${id}`, {
+      const response = await fetch(`${API_URL}/${locationCode}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-      
-      setItems(prevItems => prevItems.filter(item => item.id !== id));
+
+      setLocations(prevItems => prevItems.filter(location => location.locationCode !== locationCode));
       setEditing(false);
+      fetchItems();
+      toast.success('Item deleted successfully');
     } catch (err) {
       setError(`Failed to delete item: ${(err as Error).message}`);
       console.error('Error deleting item:', err);
+      swal(`Failed to delete item.`, `${(err as Error).message}`, 'error');
     } finally {
       setLoading(false);
     }
   };
 
   // Update an existing item via API
-  const updateItem = async (id, updatedItem) => {
+  const updateItem = async (id: number, updatedItem: Location) => {
+
+    if (locations.find(location => location.locationCode === updatedItem.locationCode && location.id !== id)) {
+      swal('Location code already exists.', '', 'error');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -100,60 +141,69 @@ const CrudApp = () => {
         },
         body: JSON.stringify(updatedItem),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-      
+
       const updated = await response.json();
-      setItems(prevItems => 
-        prevItems.map(item => (item.id === id ? updated : item))
+      setLocations(prevItems =>
+        prevItems.map(location => (location.id === id ? updated : location))
       );
+      toast.success('Item updated successfully');
     } catch (err) {
       setError(`Failed to update item: ${(err as Error).message}`);
       console.error('Error updating item:', err);
+      swal(`Failed to update item.`, `${(err as Error).message}`, 'error');
     } finally {
       setLoading(false);
     }
   };
 
   // Handle form submission
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!currentItem.name.trim() || !currentItem.description.trim()) return;
-    
+    if (!currentItem.name?.trim() || !currentItem.city?.trim() || !currentItem.locationCode?.trim() || !currentItem.country?.trim()) {
+      swal('Please fill all fields', '', 'error');
+      return;
+    }
+
     if (editing) {
       await updateItem(currentItem.id, currentItem);
       setEditing(false);
     } else {
       await addItem(currentItem);
     }
-    setCurrentItem({ id: null, name: '', description: '' });
+    setCurrentItem(new Object() as Location);
   };
 
   // Handle input change
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setCurrentItem({ ...currentItem, [name]: value });
+    setCurrentItem({ ...currentItem, [name]: value || '' });
   };
 
   // Set up for editing an item
-  const editItem = (item) => {
+  const editItem = (item: Location) => {
     setEditing(true);
     setCurrentItem({ ...item });
   };
 
+  useEffect(() => {
+    if (!editing) {
+      setCurrentItem(new Object() as Location);
+    }
+  }, [editing]);
+
   return (
     <div className="w-full max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-center mb-8">CRUD Operations App</h1>
-      
+      <Toaster className="" />
+      <h1 className="text-3xl font-bold text-center mb-8">Locations CRUD Operations</h1>
+
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-          <strong className="font-bold">Error:</strong>
-          <span className="block sm:inline"> {error}</span>
-        </div>
+        <CustomAlert variant="destructive" title="Error" description={error} />
       )}
-      
+
       <div className="mb-8 p-6 bg-white rounded-lg shadow-md">
         <h2 className="text-xl font-semibold mb-4">{editing ? 'Edit Item' : 'Add New Item'}</h2>
         <form onSubmit={handleSubmit}>
@@ -166,25 +216,62 @@ const CrudApp = () => {
               type="text"
               name="name"
               placeholder="Enter name"
-              value={currentItem.name}
+              value={currentItem.name || ''}
               onChange={handleInputChange}
               disabled={loading}
+              required={true}
             />
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="description">
-              Description
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="country">
+              Country
             </label>
-            <textarea
+            <input
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              name="description"
-              placeholder="Enter description"
-              value={currentItem.description}
+              type="text"
+              name="country"
+              placeholder="Enter country"
+              value={currentItem.country || ''}
               onChange={handleInputChange}
-              rows="3"
               disabled={loading}
+              required={true}
+              minLength={3}
+              maxLength={3}
             />
           </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="city">
+              City
+            </label>
+            <input
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              type="text"
+              name="city"
+              placeholder="Enter city"
+              value={currentItem.city || ''}
+              onChange={handleInputChange}
+              disabled={loading}
+              required={true}
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="locationCode">
+              Location Code
+            </label>
+            <input
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              type="text"
+              name="locationCode"
+              placeholder="Enter location code"
+              value={currentItem.locationCode || ''}
+              onChange={handleInputChange}
+              disabled={loading}
+              required={true}
+              minLength={3}
+              maxLength={5}
+            />
+          </div>
+
           <div className="flex justify-end">
             {editing && (
               <button
@@ -192,7 +279,7 @@ const CrudApp = () => {
                 type="button"
                 onClick={() => {
                   setEditing(false);
-                  setCurrentItem({ id: null, name: '', description: '' });
+                  setCurrentItem(currentItem);
                 }}
                 disabled={loading}
               >
@@ -209,53 +296,66 @@ const CrudApp = () => {
           </div>
         </form>
       </div>
-      
+
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <h2 className="text-xl font-semibold p-6 bg-gray-50 border-b">Item List</h2>
-        
-        {loading && !items.length && (
+
+        {loading && !locations.length && (
           <div className="p-6 text-center text-gray-500">Loading items...</div>
         )}
-        
-        {!loading && !items.length && (
+
+        {!loading && !locations.length && (
           <div className="p-6 text-center text-gray-500">No items found. Add some!</div>
         )}
-        
-        {items.length > 0 && (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {items.map(item => (
-                <tr key={item.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">{item.name}</td>
-                  <td className="px-6 py-4">{item.description}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+
+        {locations.length > 0 && (
+          <Table>
+            <TableCaption>A list of locations.</TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Actions</TableHead>
+                <TableHead className="w-[100px]">Location Code</TableHead>
+                <TableHead>Country</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead className="text-right">City</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {locations.map((location) => (
+                <TableRow key={location.locationCode}>
+                  <TableCell key={location.locationCode}>
                     <button
                       className="text-indigo-600 hover:text-indigo-900 mr-4"
-                      onClick={() => editItem(item)}
+                      onClick={() => editItem(location)}
                       disabled={loading}
                     >
                       Edit
                     </button>
                     <button
                       className="text-red-600 hover:text-red-900"
-                      onClick={() => deleteItem(item.id)}
+                      onClick={() => deleteItem(location.locationCode)}
                       disabled={loading}
                     >
                       Delete
                     </button>
-                  </td>
-                </tr>
+                  </TableCell>
+                  <TableCell className="font-medium">{location.locationCode}</TableCell>
+                  <TableCell>{location.country}</TableCell>
+                  <TableCell>{location.name}</TableCell>
+                  <TableCell className="text-right">{location.city}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TableCell>Total records</TableCell>
+                <TableCell className="text-right">{locations.length}</TableCell>
+                <TableCell colSpan={3}></TableCell>
+              </TableRow>
+            </TableFooter>
+          </Table>
         )}
+
       </div>
     </div>
   );
