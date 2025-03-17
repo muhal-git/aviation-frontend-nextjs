@@ -44,6 +44,22 @@ import Link from 'next/link';
 import { toast } from "sonner"
 import { Toaster } from "@/components/ui/sonner";
 
+// Get the appropriate icon for each transfer type
+export const getTransportIcon = (type: string) => {
+  switch (type) {
+    case 'SUBWAY':
+      return <Train size={24} />;
+    case 'BUS':
+      return <Bus size={24} />;
+    case 'UBER':
+      return <Car size={24} />;
+    case 'FLIGHT':
+      return <Plane size={24} />;
+    default:
+      return null;
+  }
+};
+
 interface Transfer {
   origin: string;
   destination: string;

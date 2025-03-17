@@ -17,13 +17,14 @@ import {
 } from "@/components/ui/table"
 import ReactPaginate from 'react-paginate';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { getTransportIcon } from '../routes/page';
 
-interface Location {
+interface Transportation {
   id: number;
-  name: string;
-  country: string;
-  city: string;
-  locationCode: string;
+  originLocationCode: string;
+  destinationLocationCode: string;
+  transportationType: string;
+  operatingDays: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -31,8 +32,8 @@ interface Location {
 // Main CRUD App Component
 const CrudApp = () => {
   // State for items and form
-  const [locations, setLocations] = React.useState<Location[]>([]);
-  const [currentItem, setCurrentItem] = useState<Location>(new Object() as Location);
+  const [transportations, setTransportations] = React.useState<Transportation[]>([]);
+  const [currentItem, setCurrentItem] = useState<Transportation>(new Object() as Transportation);
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +42,7 @@ const CrudApp = () => {
   const [filter, setFilter] = useState('');
 
   // API base URL - replace with your actual API endpoint
-  const API_URL = 'http://localhost:3434/api/locations';
+  const API_URL = 'http://localhost:3434/api/transportations';
 
   // Fetch all items from API
   const fetchItems = async () => {
@@ -53,7 +54,7 @@ const CrudApp = () => {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
       const data = await response.json();
-      setLocations(data);
+      setTransportations(data);
       swal('Transportations fetched successfully.', '', 'success');
     } catch (err) {
       setError(`Failed to fetch items: ${(err as Error).message}`);
@@ -71,7 +72,7 @@ const CrudApp = () => {
   }, []);
 
   // Add a new item via API
-  const addItem = async (item: Location) => {
+  const addItem = async (item: Transportation) => {
     setLoading(true);
     setError(null);
     try {
@@ -83,16 +84,16 @@ const CrudApp = () => {
         body: JSON.stringify(item),
       });
 
-      const locationDataResponse = await response.json();
+      const transportationResponseData = await response.json();
 
       if (!response.ok) {
-        const errorMessages = Object.values(locationDataResponse).join(', ');
+        const errorMessages = Object.values(transportationResponseData).join(', ');
         throw new Error(`HTTP error! Status: ${response.status}. Errors: ${errorMessages}`);
       }
 
       toast.success('Item added successfully');
 
-      setLocations(prevItems => [...prevItems, locationDataResponse]);
+      setTransportations(prevItems => [...prevItems, transportationResponseData]);
     } catch (err) {
       console.log("+++++++++++++++++++++++++++++++");
       console.log("err: " + err);
@@ -105,11 +106,11 @@ const CrudApp = () => {
   };
 
   // Delete an item via API
-  const deleteItem = async (locationCode: string) => {
+  const deleteItem = async (transportationId: number) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/${locationCode}`, {
+      const response = await fetch(`${API_URL}/${transportationId}`, {
         method: 'DELETE',
       });
 
@@ -117,7 +118,7 @@ const CrudApp = () => {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
-      setLocations(prevItems => prevItems.filter(location => location.locationCode !== locationCode));
+      setTransportations(prevItems => prevItems.filter(transportationItem => transportationItem.id !== transportationId));
       setEditing(false);
       fetchItems();
       toast.success('Item deleted successfully');
@@ -131,10 +132,14 @@ const CrudApp = () => {
   };
 
   // Update an existing item via API
-  const updateItem = async (id: number, updatedItem: Location) => {
+  const updateItem = async (id: number, updatedItem: Transportation) => {
 
-    if (locations.find(location => location.locationCode === updatedItem.locationCode && location.id !== id)) {
-      swal('Location code already exists.', '', 'error');
+    if (transportations.find(transportationItem =>
+        transportationItem.originLocationCode === updatedItem.originLocationCode &&
+        transportationItem.destinationLocationCode === updatedItem.destinationLocationCode &&
+        transportationItem.transportationType === updatedItem.transportationType &&
+        transportationItem.operatingDays === updatedItem.operatingDays)) {
+      swal('Transportation already exists.', '', 'error');
       return;
     }
 
@@ -154,8 +159,8 @@ const CrudApp = () => {
       }
 
       const updated = await response.json();
-      setLocations(prevItems =>
-        prevItems.map(location => (location.id === id ? updated : location))
+      setTransportations(prevItems =>
+        prevItems.map(transportationItem => (transportationItem.id === id ? updated : transportationItem))
       );
       toast.success('Item updated successfully');
     } catch (err) {
@@ -170,7 +175,7 @@ const CrudApp = () => {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!currentItem.name?.trim() || !currentItem.city?.trim() || !currentItem.locationCode?.trim() || !currentItem.country?.trim()) {
+    if (!currentItem.originLocationCode?.trim() || !currentItem.transportationType?.trim() || !currentItem.operatingDays?.trim() || !currentItem.destinationLocationCode?.trim()) {
       swal('Please fill all fields', '', 'error');
       return;
     }
@@ -181,7 +186,7 @@ const CrudApp = () => {
     } else {
       await addItem(currentItem);
     }
-    setCurrentItem(new Object() as Location);
+    setCurrentItem(new Object() as Transportation);
   };
 
   // Handle input change
@@ -191,14 +196,14 @@ const CrudApp = () => {
   };
 
   // Set up for editing an item
-  const editItem = (item: Location) => {
+  const editItem = (item: Transportation) => {
     setEditing(true);
     setCurrentItem({ ...item });
   };
 
   useEffect(() => {
     if (!editing) {
-      setCurrentItem(new Object() as Location);
+      setCurrentItem(new Object() as Transportation);
     }
   }, [editing]);
 
@@ -208,13 +213,13 @@ const CrudApp = () => {
 
   const filteredItems = useMemo(() => {
     const lowerFilter = filter.toLowerCase();
-    return locations.filter(location =>
-      location.name?.toLowerCase().includes(lowerFilter) ||
-      location.country?.toLowerCase().includes(lowerFilter) ||
-      location.city?.toLowerCase().includes(lowerFilter) ||
-      location.locationCode?.toLowerCase().includes(lowerFilter)
+    return transportations.filter(location =>
+      location.originLocationCode?.toLowerCase().includes(lowerFilter) ||
+      location.destinationLocationCode?.toLowerCase().includes(lowerFilter) ||
+      location.transportationType?.toLowerCase().includes(lowerFilter) ||
+      location.operatingDays?.toLowerCase().includes(lowerFilter)
     );
-  }, [filter, locations]);
+  }, [filter, transportations]);
 
   const offset = currentPage * itemsPerPage;
   const currentItems = filteredItems.slice(offset, offset + itemsPerPage);
@@ -222,7 +227,7 @@ const CrudApp = () => {
   return (
     <div className="w-full max-w-4xl mx-auto p-6">
       <Toaster className="" />
-      <h1 className="text-3xl font-bold text-center mb-8">Locations CRUD Operations</h1>
+      <h1 className="text-3xl font-bold text-center mb-8">Transportations CRUD Operations</h1>
 
       {error && (
         <CustomAlert variant="destructive" title="Error" description={error} />
@@ -232,67 +237,67 @@ const CrudApp = () => {
         <h2 className="text-xl font-semibold mb-4">{editing ? 'Edit Item' : 'Add New Item'}</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
-              Name
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="originLocationCode">
+              Origin Location Code
             </label>
             <input
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               type="text"
-              name="name"
-              placeholder="Enter name"
-              value={currentItem.name || ''}
-              onChange={handleInputChange}
-              disabled={loading}
-              required={true}
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="country">
-              Country
-            </label>
-            <input
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              type="text"
-              name="country"
-              placeholder="Enter country"
-              value={currentItem.country || ''}
-              onChange={handleInputChange}
-              disabled={loading}
-              required={true}
-              minLength={3}
-              maxLength={3}
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="city">
-              City
-            </label>
-            <input
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              type="text"
-              name="city"
-              placeholder="Enter city"
-              value={currentItem.city || ''}
-              onChange={handleInputChange}
-              disabled={loading}
-              required={true}
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="locationCode">
-              Location Code
-            </label>
-            <input
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              type="text"
-              name="locationCode"
+              name="originLocationCode"
               placeholder="Enter location code"
-              value={currentItem.locationCode || ''}
+              value={currentItem.originLocationCode || ''}
               onChange={handleInputChange}
               disabled={loading}
               required={true}
               minLength={3}
               maxLength={5}
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destinationLocationCode">
+              Destination Location Code
+            </label>
+            <input
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              type="text"
+              name="destinationLocationCode"
+              placeholder="Enter destination location code"
+              value={currentItem.destinationLocationCode || ''}
+              onChange={handleInputChange}
+              disabled={loading}
+              required={true}
+              minLength={3}
+              maxLength={5}
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="transportationType">
+              Transportation Type
+            </label>
+            <input
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              type="text"
+              name="transportationType"
+              placeholder="Enter transportation type"
+              value={currentItem.transportationType || ''}
+              onChange={handleInputChange}
+              disabled={loading}
+              required={true}
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="operatingDays">
+              Operating Days
+            </label>
+            <input
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              type="text"
+              name="operatingDays"
+              placeholder="Enter operating days"
+              value={currentItem.operatingDays || ''}
+              onChange={handleInputChange}
+              disabled={loading}
+              required={true}
             />
           </div>
 
@@ -325,75 +330,75 @@ const CrudApp = () => {
         <h2 className="text-xl font-semibold p-6 bg-gray-50 border-b">Item List</h2>
 
         <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="filter">
-              Filter
-            </label>
-            <input
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              type="text"
-              name="filter"
-              placeholder="Enter filter keyword"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              disabled={loading}
-            />
-          </div>
+          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="filter">
+            Filter
+          </label>
+          <input
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            type="text"
+            name="filter"
+            placeholder="Enter filter keyword"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            disabled={loading}
+          />
+        </div>
 
-        {loading && !locations.length && (
+        {loading && !transportations.length && (
           <div className="p-6 text-center text-gray-500">Loading items...</div>
         )}
 
-        {!loading && !locations.length && (
+        {!loading && !transportations.length && (
           <div className="p-6 text-center text-gray-500">No items found. Add some!</div>
         )}
 
-        {locations.length > 0 && (
+        {transportations.length > 0 && (
           <>
             <Table>
-              <TableCaption>A list of locations.</TableCaption>
+              <TableCaption>A list of transportations.</TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead>Actions</TableHead>
-                  <TableHead className="w-[100px]">Location Code</TableHead>
-                  <TableHead>Country</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>City</TableHead>
+                  <TableHead>Operation Days</TableHead>
+                  <TableHead>Origin Code</TableHead>
+                  <TableHead>Destination Code</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Creation Date</TableHead>
                   <TableHead>Update Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentItems.map((location) => (
-                  <TableRow key={location.locationCode}>
-                    <TableCell key={location.locationCode}>
+                {currentItems.map((transportation) => (
+                  <TableRow key={transportation.id}>
+                    <TableCell key={transportation.id}>
                       <button
                         className="text-indigo-600 hover:text-indigo-900 mr-4"
-                        onClick={() => editItem(location)}
+                        onClick={() => editItem(transportation)}
                         disabled={loading}
                       >
                         Edit
                       </button>
                       <button
                         className="text-red-600 hover:text-red-900"
-                        onClick={() => deleteItem(location.locationCode)}
+                        onClick={() => deleteItem(transportation.id)}
                         disabled={loading}
                       >
                         Delete
                       </button>
                     </TableCell>
-                    <TableCell className="font-medium">{location.locationCode}</TableCell>
-                    <TableCell className="text-left">{location.country}</TableCell>
-                    <TableCell className="text-left">{location.name}</TableCell>
-                    <TableCell className="text-left">{location.city}</TableCell>
-                    <TableCell className="text-left">{location.createdAt}</TableCell>
-                    <TableCell className="text-left">{location.updatedAt}</TableCell>
+                    <TableCell className="text-left">{transportation.operatingDays}</TableCell>
+                    <TableCell className="font-medium text-left">{transportation.originLocationCode}</TableCell>
+                    <TableCell className="font-medium text-left">{transportation.destinationLocationCode}</TableCell>
+                    <TableCell className="text-left">{getTransportIcon(transportation.transportationType)}</TableCell>
+                    <TableCell className="text-left">{transportation.createdAt}</TableCell>
+                    <TableCell className="text-left">{transportation.updatedAt}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
               <TableFooter>
                 <TableRow>
                   <TableCell>Total records</TableCell>
-                  <TableCell className="text-right">{locations.length}</TableCell>
+                  <TableCell className="text-right">{transportations.length}</TableCell>
                   <TableCell colSpan={5}></TableCell>
                 </TableRow>
               </TableFooter>
@@ -403,7 +408,7 @@ const CrudApp = () => {
               nextLabel={<ChevronRight size={16} />}
               breakLabel={'...'}
               breakClassName={'break-me'}
-              pageCount={Math.ceil(locations.length / itemsPerPage)}
+              pageCount={Math.ceil(transportations.length / itemsPerPage)}
               marginPagesDisplayed={2}
               pageRangeDisplayed={5}
               onPageChange={handlePageClick}

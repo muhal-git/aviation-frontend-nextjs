@@ -1,4 +1,5 @@
 import { Revenue } from './definitions';
+import { Bus, Car, Train, Plane, Circle, MapPin, MoveRight } from 'lucide-react';
 
 export const formatCurrency = (amount: number) => {
   return (amount / 100).toLocaleString('en-US', {
