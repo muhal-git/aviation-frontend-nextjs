@@ -205,11 +205,12 @@ const CrudApp = () => {
   };
 
   const filteredItems = useMemo(() => {
+    const lowerFilter = filter.toLowerCase();
     return locations.filter(location =>
-      location.name.toLowerCase().includes(filter.toLowerCase()) ||
-      location.country.toLowerCase().includes(filter.toLowerCase()) ||
-      location.city.toLowerCase().includes(filter.toLowerCase()) ||
-      location.locationCode.toLowerCase().includes(filter.toLowerCase())
+      location.name?.toLowerCase().includes(lowerFilter) ||
+      location.country?.toLowerCase().includes(lowerFilter) ||
+      location.city?.toLowerCase().includes(lowerFilter) ||
+      location.locationCode?.toLowerCase().includes(lowerFilter)
     );
   }, [filter, locations]);
 
