@@ -39,6 +39,10 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer"
+import { Bus, Car, Train, Plane, Circle, MapPin, MoveRight } from 'lucide-react';
+import Link from 'next/link';
+import { toast } from "sonner"
+import { Toaster } from "@/components/ui/sonner";
 
 interface Transfer {
   origin: string;
@@ -63,6 +67,22 @@ export default function TripSelection() {
 
   const [locations, setLocations] = React.useState([]);
   const [routes, setRoutes] = React.useState<Route[]>([]);
+
+  // Get the appropriate icon for each transfer type
+  const getTransportIcon = (type: string) => {
+    switch (type) {
+      case 'SUBWAY':
+        return <Train size={24} />;
+      case 'BUS':
+        return <Bus size={24} />;
+      case 'UBER':
+        return <Car size={24} />;
+      case 'FLIGHT':
+        return <Plane size={24} />;
+      default:
+        return null;
+    }
+  };
 
   React.useEffect(() => {
     fetch("http://localhost:3434/api/locations")
@@ -185,28 +205,74 @@ export default function TripSelection() {
 
       {routes.length > 0 && (
         <div className="mt-4">
+          <h2>Routes</h2>
           <ScrollArea className="h-96 rounded-md border">
             <div className="p-4">
-              <h4 className="mb-4 text-sm font-medium leading-none">Routes</h4>
               {routes.map((route, index) => (
                 <React.Fragment key={index}>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                      let message = `Description: ${route.description}\nOrigin: ${route.flight.origin}\nDestination: ${route.flight.destination}\nTransportation Type: ${route.flight.transportationType}`;
-                      if (route.beforeFlightTransfer) {
-                        message += `\n\nBefore Flight Transfer:\nOrigin: ${route.beforeFlightTransfer.origin}\nDestination: ${route.beforeFlightTransfer.destination}\nTransportation Type: ${route.beforeFlightTransfer.transportationType}`;
-                      }
-                      if (route.afterFlightTransfer) {
-                        message += `\n\nAfter Flight Transfer:\nOrigin: ${route.afterFlightTransfer.origin}\nDestination: ${route.afterFlightTransfer.destination}\nTransportation Type: ${route.afterFlightTransfer.transportationType}`;
-                      }
-                      alert(message);
-                    }}
-                    key={index}
-                  >
-                    {route.description}
-                  </Button><Separator className="my-2" />
+
+
+                  <Drawer>
+                    <DrawerTrigger className="w-full">
+                      {route.description}
+                    </DrawerTrigger>
+                    <DrawerContent>
+                      <DrawerHeader>
+                        <DrawerTitle>Route Details</DrawerTitle>
+                        <DrawerDescription className="mt-4">
+
+
+                          <span className="flex items-center space-x-2 text-sm text-gray-600">
+                            <Circle size={24} />
+                            <span>{locations.filter((location: { locationCode: string }) => location.locationCode === origin)[0]["name"]}</span>
+                          </span>
+
+                          <span className="flex items-center space-x-2 text-sm text-gray-600">
+                            {getTransportIcon(route.beforeFlightTransfer ? route.beforeFlightTransfer.transportationType : "")}
+                            <span>{route.beforeFlightTransfer ? `${route.beforeFlightTransfer.transportationType} -> ${route.beforeFlightTransfer.destination}` : ''}</span>
+                          </span>
+
+                          <span className="flex items-center space-x-2 text-sm text-gray-600">
+                            <Plane size={24} />
+                            <span>{`FLIGHT -> ${route.flight.destination}`}</span>
+                          </span>
+
+                          <span className="flex items-center space-x-2 text-sm text-gray-600">
+                            {getTransportIcon(route.afterFlightTransfer ? route.afterFlightTransfer.transportationType : "")}
+                            <span>{route.afterFlightTransfer ? `${route.afterFlightTransfer.transportationType} -> ${route.afterFlightTransfer.destination}` : ''}</span>
+                          </span>
+
+                          <span className="flex items-center space-x-2 text-sm text-gray-600">
+                            <MapPin size={24} />
+                            <span>{locations.filter((location: { locationCode: string }) => location.locationCode === destination)[0]["name"]}</span>
+                          </span>
+
+
+                        </DrawerDescription>
+                      </DrawerHeader>
+                      <DrawerFooter>
+
+                        <Link
+                          href={"#"}
+                          className="flex items-center gap-5 self-start rounded-lg bg-blue-500 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-400 md:text-base"
+                          onClick={() =>
+                            toast("Ticket been created", {
+                              description: `from ${origin} to ${destination} on ${date ? format(date, "PPP") : "unknown date"}`,
+                              action: {
+                                label: "Undo",
+                                onClick: () => console.log("Undo"),
+                              },
+                            })
+                          }
+                        >
+                          Continue
+                        </Link>
+
+                      </DrawerFooter>
+                    </DrawerContent>
+                  </Drawer>
+
+                  <Separator className="my-2" />
                 </React.Fragment>
               ))}
             </div>
@@ -214,24 +280,7 @@ export default function TripSelection() {
         </div>
       )}
 
-      <Drawer>
-        <DrawerTrigger>Open</DrawerTrigger>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>Are you absolutely sure?</DrawerTitle>
-            <DrawerDescription>This action cannot be undone.</DrawerDescription>
-          </DrawerHeader>
-          <DrawerFooter>
-            <Button>Submit</Button>
-            <DrawerClose>
-              <Button variant="outline">Cancel</Button>
-            </DrawerClose>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
-
-
-
+      <Toaster className="" />
     </main>
   );
 }
