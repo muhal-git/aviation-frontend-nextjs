@@ -357,7 +357,9 @@ const CrudApp = () => {
                   <TableHead className="w-[100px]">Location Code</TableHead>
                   <TableHead>Country</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead className="text-right">City</TableHead>
+                  <TableHead>City</TableHead>
+                  <TableHead>Creation Date</TableHead>
+                  <TableHead>Update Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -380,9 +382,11 @@ const CrudApp = () => {
                       </button>
                     </TableCell>
                     <TableCell className="font-medium">{location.locationCode}</TableCell>
-                    <TableCell>{location.country}</TableCell>
-                    <TableCell>{location.name}</TableCell>
-                    <TableCell className="text-right">{location.city}</TableCell>
+                    <TableCell className="text-left">{location.country}</TableCell>
+                    <TableCell className="text-left">{location.name}</TableCell>
+                    <TableCell className="text-left">{location.city}</TableCell>
+                    <TableCell className="text-left">{location.createdAt}</TableCell>
+                    <TableCell className="text-left">{location.updatedAt}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -390,7 +394,7 @@ const CrudApp = () => {
                 <TableRow>
                   <TableCell>Total records</TableCell>
                   <TableCell className="text-right">{locations.length}</TableCell>
-                  <TableCell colSpan={3}></TableCell>
+                  <TableCell colSpan={5}></TableCell>
                 </TableRow>
               </TableFooter>
             </Table>
