@@ -221,8 +221,7 @@ const CrudApp = () => {
     return transportations.filter(location =>
       location.originLocationCode?.toLowerCase().includes(lowerFilter) ||
       location.destinationLocationCode?.toLowerCase().includes(lowerFilter) ||
-      location.transportationType?.toLowerCase().includes(lowerFilter) ||
-      location.operatingDays?.toLowerCase().includes(lowerFilter)
+      location.transportationType?.toLowerCase().includes(lowerFilter)
     );
   }, [filter, transportations]);
 
