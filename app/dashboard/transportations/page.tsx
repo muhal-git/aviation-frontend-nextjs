@@ -24,7 +24,7 @@ interface Transportation {
   originLocationCode: string;
   destinationLocationCode: string;
   transportationType: string;
-  operatingDays: string;
+  operatingDays: number[];
   createdAt: string;
   updatedAt: string;
 }
@@ -180,7 +180,7 @@ const CrudApp = () => {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!currentItem.originLocationCode?.trim() || !currentItem.transportationType?.trim() || !currentItem.operatingDays?.trim() || !currentItem.destinationLocationCode?.trim()) {
+    if (!currentItem.originLocationCode?.trim() || !currentItem.transportationType?.trim() || !currentItem.operatingDays || !currentItem.destinationLocationCode?.trim()) {
       swal('Please fill all fields', '', 'error');
       return;
     }
@@ -294,21 +294,37 @@ const CrudApp = () => {
               <option value="SUBWAY">SUBWAY</option>
             </select>
           </div>
-          <div className="mb-4">
+            <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="operatingDays">
               Operating Days
             </label>
-            <input
+            <select
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              type="text"
               name="operatingDays"
-              placeholder="Enter operating days"
-              value={currentItem.operatingDays || ''}
-              onChange={handleInputChange}
+              multiple
+              value={currentItem.operatingDays || []}
+              onChange={(e) => {
+              const options = e.target.options;
+              const selectedValues: number[] = [];
+              for (let i = 0; i < options.length; i++) {
+                if (options[i].selected) {
+                selectedValues.push(Number(options[i].value));
+                }
+              }
+              setCurrentItem({ ...currentItem, operatingDays: selectedValues });
+              }}
               disabled={loading}
               required={true}
-            />
-          </div>
+            >
+              <option value="7">Sunday</option>
+              <option value="1">Monday</option>
+              <option value="2">Tuesday</option>
+              <option value="3">Wednesday</option>
+              <option value="4">Thursday</option>
+              <option value="5">Friday</option>
+              <option value="6">Saturday</option>
+            </select>
+            </div>
 
           <div className="flex justify-end">
             {editing && (
