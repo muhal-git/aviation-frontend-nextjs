@@ -42,6 +42,7 @@ import {
 import { Bus, Car, Train, Plane, Circle, MapPin, MoveRight } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from "sonner"
+import swal from 'sweetalert';
 import { Toaster } from "@/components/ui/sonner";
 
 // Get the appropriate icon for each transfer type
@@ -124,7 +125,10 @@ export default function TripSelection() {
       .then((response) => response.json())
       .then((data) => {
         const multipliedRoutes = data.flatMap((route: Route) => [route, route, route, route, route, route, route, route, route, route]);
-        setRoutes(multipliedRoutes);
+        setRoutes(data);
+        if (data.length === 0) {
+          swal("No routes found", `from ${origin} to ${destination} on ${format(date, "PPP")}`, "warning");
+        }
       })
       .catch((error) => console.error("Error fetching routes:", error));
 
