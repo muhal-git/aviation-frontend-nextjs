@@ -54,11 +54,11 @@ const CrudApp = () => {
       }
       const data = await response.json();
       setLocations(data);
-      swal('Transportations fetched successfully.', '', 'success');
+      swal('Locations fetched successfully.', '', 'success');
     } catch (err) {
       setError(`Failed to fetch items: ${(err as Error).message}`);
       console.error('Error fetching items:', err);
-      swal(`Failed to fetch transportations.`, `${(err as Error).message}`, 'error');
+      swal(`Failed to fetch locations.`, `${(err as Error).message}`, 'error');
       setTimeout(fetchItems, 3000);
     } finally {
       setLoading(false);
